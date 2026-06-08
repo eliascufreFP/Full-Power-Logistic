@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StockApp">
+<title>StockApp</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a;
+  --bg2: #1e293b;
+  --bg3: #334155;
+  --surface: #1e293b;
+  --surface2: #273549;
+  --border: rgba(148,163,184,0.12);
+  --border2: rgba(148,163,184,0.25);
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --accent: #3b82f6;
+  --accent2: #1d4ed8;
+  --green: #22c55e;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; }
+a { color: inherit; text-decoration: none; }
+button { font-family: 'DM Sans', sans-serif; cursor: pointer; border: none; background: none; color: inherit; font-size: 14px; }
+
+/* SPLASH / LOGIN */
+#splash { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; gap: 8px; }
+.splash-logo { font-size: 48px; font-weight: 300; letter-spacing: -2px; color: var(--text); }
+.splash-logo span { color: var(--accent); }
+.splash-sub { color: var(--text3); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
+
+#login-screen { position: fixed; inset: 0; background: var(--bg); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; z-index: 998; }
+.login-box { background: var(--surface); border: 0.5px solid var(--border2); border-radius: 16px; padding: 32px 24px; width: 100%; max-width: 360px; }
+.login-logo { font-size: 28px; font-weight: 300; letter-spacing: -1px; margin-bottom: 4px; }
+.login-logo span { color: var(--accent); }
+.login-sub { color: var(--text3); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 28px; }
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; letter-spacing: 0.5px; }
+.field input, .field select { width: 100%; background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.btn-primary { width: 100%; background: var(--accent); color: #fff; border-radius: var(--radius-sm); padding: 12px; font-size: 14px; font-weight: 500; transition: background 0.2s, transform 0.1s; }
+.btn-primary:active { transform: scale(0.98); background: var(--accent2); }
+.login-error { background: rgba(239,68,68,0.1); border: 0.5px solid rgba(239,68,68,0.3); border-radius: var(--radius-sm); padding: 10px 14px; color: #fca5a5; font-size: 13px; margin-bottom: 16px; display: none; }
+
+/* APP SHELL */
+#app { display: none; flex-direction: column; min-height: 100vh; }
+.topbar { background: var(--surface); border-bottom: 0.5px solid var(--border); padding: 0 16px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.topbar-logo { font-size: 18px; font-weight: 300; letter-spacing: -0.5px; }
+.topbar-logo span { color: var(--accent); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-user { font-size: 12px; color: var(--text2); }
+.topbar-role { font-size: 10px; color: var(--text3); background: var(--bg3); border-radius: 4px; padding: 2px 6px; }
+.btn-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--text2); font-size: 18px; transition: background 0.15s, color 0.15s; }
+.btn-icon:hover { background: var(--bg3); color: var(--text); }
+
+/* BOTTOM NAV */
+.bottomnav { background: var(--surface); border-top: 0.5px solid var(--border); display: flex; position: sticky; bottom: 0; z-index: 100; }
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 4px; gap: 3px; color: var(--text3); font-size: 10px; transition: color 0.15s; cursor: pointer; }
+.nav-item svg { width: 20px; height: 20px; }
+.nav-item.active { color: var(--accent); }
+
+/* CONTENT */
+.content { flex: 1; padding: 16px; max-width: 600px; margin: 0 auto; width: 100%; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* CARDS */
+.card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.card-title { font-size: 13px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* STAT CARDS */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.stat-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.stat-val { font-size: 26px; font-weight: 300; letter-spacing: -1px; }
+.stat-label { font-size: 11px; color: var(--text3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-card.accent { border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.08); }
+.stat-card.accent .stat-val { color: var(--accent); }
+.stat-card.warn { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.08); }
+.stat-card.warn .stat-val { color: var(--amber); }
+.stat-card.danger { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); }
+.stat-card.danger .stat-val { color: var(--red); }
+.stat-card.good { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.08); }
+.stat-card.good .stat-val { color: var(--green); }
+
+/* BADGES */
+.badge { display: inline-flex; align-items: center; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+.badge-green { background: rgba(34,197,94,0.15); color: #86efac; }
+.badge-red { background: rgba(239,68,68,0.15); color: #fca5a5; }
+.badge-amber { background: rgba(245,158,11,0.15); color: #fcd34d; }
+.badge-blue { background: rgba(59,130,246,0.15); color: #93c5fd; }
+.badge-gray { background: rgba(148,163,184,0.1); color: var(--text2); }
+
+/* ARTICLE LIST */
+.article-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid var(--border); cursor: pointer; transition: background 0.1s; }
+.article-item:last-child { border-bottom: none; }
+.article-thumb { width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 11px; font-family: 'DM Mono', monospace; color: var(--text3); flex-shrink: 0; }
+.article-info { flex: 1; min-width: 0; }
+.article-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.article-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.article-stock { text-align: right; flex-shrink: 0; }
+.article-stock-num { font-size: 18px; font-weight: 300; letter-spacing: -0.5px; font-family: 'DM Mono', monospace; }
+.article-stock-label { font-size: 10px; color: var(--text3); text-align: right; }
+
+/* SEARCH */
+.search-bar { position: relative; margin-bottom: 16px; }
+.search-bar input { width: 100%; background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 10px 14px 10px 40px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; }
+.search-bar input:focus { border-color: var(--accent); }
+.search-bar svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); width: 18px; height: 18px; }
+.scan-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--bg3); border-radius: 6px; padding: 5px 10px; font-size: 12px; color: var(--text2); }
+
+/* FORMS */
+.form-section { margin-bottom: 20px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-full { grid-column: 1 / -1; }
+.field input, .field select, .field textarea { width: 100%; background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+.field select option { background: var(--bg2); }
+.field textarea { resize: vertical; min-height: 80px; }
+
+/* BUTTONS */
+.btn { border-radius: var(--radius-sm); padding: 10px 16px; font-size: 14px; font-weight: 500; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-danger { background: rgba(239,68,68,0.15); color: #fca5a5; border: 0.5px solid rgba(239,68,68,0.2); }
+.btn-danger:hover { background: rgba(239,68,68,0.25); }
+.btn-ghost { background: var(--bg3); color: var(--text2); }
+.btn-ghost:hover { background: var(--border2); color: var(--text); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-full { width: 100%; justify-content: center; }
+
+/* MODALS */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--bg2); border-radius: 20px 20px 0 0; border: 0.5px solid var(--border2); width: 100%; max-width: 600px; padding: 20px; max-height: 92vh; overflow-y: auto; transform: translateY(40px); transition: transform 0.2s; }
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-handle { width: 36px; height: 4px; background: var(--bg3); border-radius: 2px; margin: 0 auto 20px; }
+.modal-title { font-size: 17px; font-weight: 500; margin-bottom: 20px; }
+
+/* SCANNER */
+#scanner-overlay { position: fixed; inset: 0; background: #000; z-index: 600; display: none; flex-direction: column; }
+.scanner-header { padding: 20px 16px 10px; display: flex; align-items: center; gap: 12px; }
+.scanner-title { font-size: 16px; font-weight: 500; flex: 1; }
+#qr-reader { width: 100%; max-width: 600px; margin: 0 auto; }
+.scanner-footer { padding: 20px 16px; text-align: center; color: var(--text3); font-size: 13px; }
+
+/* ALERTS LIST */
+.alert-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+.alert-item:last-child { border-bottom: none; }
+.alert-icon { width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+.alert-icon.warn { background: rgba(245,158,11,0.15); }
+.alert-icon.danger { background: rgba(239,68,68,0.15); }
+.alert-text { flex: 1; }
+.alert-name { font-size: 13px; font-weight: 500; }
+.alert-detail { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+/* TABS */
+.tabs { display: flex; background: var(--bg); border-radius: var(--radius); padding: 3px; margin-bottom: 16px; }
+.tab { flex: 1; text-align: center; padding: 8px; border-radius: 9px; font-size: 13px; color: var(--text3); cursor: pointer; transition: all 0.15s; }
+.tab.active { background: var(--surface); color: var(--text); font-weight: 500; }
+
+/* CONTEO */
+.conteo-item { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+.conteo-nombre { font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+.conteo-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.conteo-input-wrap label { font-size: 11px; color: var(--text3); margin-bottom: 4px; display: block; }
+.conteo-input-wrap input { width: 100%; background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 10px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 16px; text-align: center; outline: none; }
+.conteo-input-wrap input:focus { border-color: var(--accent); }
+.diff-tag { text-align: center; margin-top: 8px; }
+
+/* HISTORIAL */
+.historial-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+.historial-item:last-child { border-bottom: none; }
+.h-date { font-size: 12px; color: var(--text3); }
+.h-name { font-size: 14px; font-weight: 500; }
+.h-diff { font-family: 'DM Mono', monospace; font-size: 14px; }
+
+/* SECTION HEADER */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.section-title { font-size: 17px; font-weight: 500; }
+.section-sub { font-size: 12px; color: var(--text3); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 0; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 10px 18px; font-size: 13px; opacity: 0; transition: all 0.25s; z-index: 999; white-space: nowrap; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: rgba(34,197,94,0.4); color: #86efac; }
+.toast.error { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
+
+/* EMPTY STATE */
+.empty { text-align: center; padding: 48px 24px; }
+.empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+.empty-text { color: var(--text3); font-size: 14px; }
+
+/* DIFF COLORS */
+.diff-pos { color: var(--red); }
+.diff-neg { color: var(--green); }
+.diff-zero { color: var(--text3); }
+
+/* USUARIOS PAGE */
+.user-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+.user-item:last-child { border-bottom: none; }
+.user-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; flex-shrink: 0; }
+.user-info { flex: 1; }
+.user-name { font-size: 14px; font-weight: 500; }
+.user-role { font-size: 12px; color: var(--text3); }
+
+/* NOTAS */
+.nota-item { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+.nota-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.nota-author { font-size: 12px; color: var(--text3); }
+.nota-date { font-size: 11px; color: var(--text3); }
+.nota-text { font-size: 14px; line-height: 1.5; }
+
+@media (min-width: 600px) {
+  .stats-grid { grid-template-columns: repeat(4, 1fr); }
+  .form-grid { grid-template-columns: repeat(3, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">stock<span>app</span></div>
+  <div class="splash-sub">gestión de inventario</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">stock<span>app</span></div>
+    <div class="login-sub">Gestión de inventario</div>
+    <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
+    <div class="field"><label>Usuario</label><input type="text" id="login-user" placeholder="nombre de usuario" autocomplete="username"></div>
+    <div class="field"><label>Contraseña</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Ingresar</button>
+  </div>
+</div>
+
+<!-- SCANNER OVERLAY -->
+<div id="scanner-overlay">
+  <div class="scanner-header">
+    <button class="btn-icon" onclick="closeScanner()" style="color:#fff">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="scanner-title">Escanear código</div>
+  </div>
+  <div id="qr-reader"></div>
+  <div class="scanner-footer">Apuntá la cámara al código de barras o QR</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">stock<span>app</span></div>
+    <div class="topbar-right">
+      <div style="text-align:right">
+        <div class="topbar-user" id="topbar-username"></div>
+        <div class="topbar-role" id="topbar-role"></div>
+      </div>
+      <button class="btn-icon" onclick="doLogout()" title="Cerrar sesión">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="section-header" style="margin-bottom:16px">
+        <div>
+          <div class="section-title">Resumen</div>
+          <div class="section-sub" id="dash-fecha"></div>
+        </div>
+      </div>
+      <div class="stats-grid" id="dash-stats"></div>
+      <!-- ALERTAS CRÍTICAS -->
+      <div class="card" id="dash-alertas-card">
+        <div class="card-header"><div class="card-title">⚠ Alertas de stock</div><span id="dash-alertas-count" class="badge badge-amber"></span></div>
+        <div id="dash-alertas-list"></div>
+      </div>
+      <!-- ÚLTIMOS CONTEOS -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Últimos conteos</div></div>
+        <div id="dash-conteos-list"></div>
+      </div>
+      <!-- MÁS MOVIMIENTOS -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Mayor movimiento</div></div>
+        <div id="dash-mov-list"></div>
+      </div>
+    </div>
+
+    <!-- ARTÍCULOS -->
+    <div class="page" id="page-articulos">
+      <div class="section-header">
+        <div class="section-title">Artículos</div>
+        <button class="btn btn-primary btn-sm" id="btn-nuevo-articulo" onclick="openModalArticulo()">+ Nuevo</button>
+      </div>
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="search-articulos" placeholder="Buscar por nombre, SKU, categoría…" oninput="renderArticulos()">
+        <button class="scan-btn" onclick="openScanner('search')">📷 Scan</button>
+      </div>
+      <!-- FILTROS -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px">
+        <button class="badge badge-blue" id="filter-all" onclick="setFilter('all')">Todos</button>
+        <button class="badge badge-amber" id="filter-low" onclick="setFilter('low')">Poco stock</button>
+        <button class="badge badge-red" id="filter-zero" onclick="setFilter('zero')">Sin stock</button>
+      </div>
+      <div id="lista-articulos"></div>
+    </div>
+
+    <!-- CONTEOS -->
+    <div class="page" id="page-conteos">
+      <div class="section-header">
+        <div class="section-title">Conteos</div>
+        <button class="btn btn-primary btn-sm" id="btn-nuevo-conteo" onclick="openModalNuevoConteo()">+ Nuevo</button>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="switchConteoTab('activos',this)">En curso</div>
+        <div class="tab" onclick="switchConteoTab('historial',this)">Historial</div>
+        <div class="tab" onclick="switchConteoTab('diferencias',this)">Diferencias</div>
+      </div>
+      <div id="conteos-activos"></div>
+      <div id="conteos-historial" style="display:none"></div>
+      <div id="conteos-diferencias" style="display:none"></div>
+    </div>
+
+    <!-- NOTAS -->
+    <div class="page" id="page-notas">
+      <div class="section-header">
+        <div class="section-title">Notas</div>
+        <button class="btn btn-primary btn-sm" onclick="openModalNota()">+ Nueva</button>
+      </div>
+      <div id="lista-notas"></div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="page" id="page-admin">
+      <div class="section-title" style="margin-bottom:16px">Administración</div>
+      <div class="card" id="card-usuarios">
+        <div class="card-header"><div class="card-title">Usuarios</div><button class="btn btn-ghost btn-sm" onclick="openModalUsuario()">+ Agregar</button></div>
+        <div id="lista-usuarios"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Exportar datos</div></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-ghost btn-full" onclick="exportarArticulos()">📊 Exportar artículos (Excel)</button>
+          <button class="btn btn-ghost btn-full" onclick="exportarConteos()">📊 Exportar historial conteos (Excel)</button>
+          <button class="btn btn-ghost btn-full" onclick="exportarDiferencias()">📊 Exportar diferencias (Excel)</button>
+        </div>
+      </div>
+      <div class="card" id="card-categorias">
+        <div class="card-header"><div class="card-title">Categorías</div><button class="btn btn-ghost btn-sm" onclick="openModalCategoria()">+ Nueva</button></div>
+        <div id="lista-categorias"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottomnav" id="bottomnav">
+    <div class="nav-item active" onclick="navTo('dashboard',this)" id="nav-dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Inicio
+    </div>
+    <div class="nav-item" onclick="navTo('articulos',this)" id="nav-articulos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+      Artículos
+    </div>
+    <div class="nav-item" onclick="navTo('conteos',this)" id="nav-conteos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Conteos
+    </div>
+    <div class="nav-item" onclick="navTo('notas',this)" id="nav-notas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Notas
+    </div>
+    <div class="nav-item" onclick="navTo('admin',this)" id="nav-admin">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg>
+      Admin
+    </div>
+  </div>
+</div><!-- /app -->
+
+<!-- MODALES -->
+<!-- Modal Artículo -->
+<div class="modal-overlay" id="modal-articulo">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-articulo-title">Nuevo artículo</div>
+    <div class="form-grid">
+      <div class="field"><label>SKU</label><input type="text" id="art-sku" placeholder="SKU001"></div>
+      <div class="field"><label>Código de barras</label><input type="text" id="art-barcode" placeholder="7890001234"><button class="scan-btn" style="position:relative;transform:none;display:inline-block;margin-left:4px;margin-top:4px" onclick="openScanner('barcode')">📷</button></div>
+      <div class="field field-full"><label>Nombre</label><input type="text" id="art-nombre" placeholder="Nombre del artículo"></div>
+      <div class="field"><label>Categoría</label><select id="art-categoria"><option value="">Seleccionar…</option></select></div>
+      <div class="field"><label>Ubicación</label><input type="text" id="art-ubicacion" placeholder="Ej: Pasillo A3"></div>
+      <div class="field"><label>Stock actual</label><input type="number" id="art-stock" placeholder="0" min="0"></div>
+      <div class="field"><label>Stock mínimo (alerta)</label><input type="number" id="art-minimo" placeholder="5" min="0"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-articulo')">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="guardarArticulo()">Guardar</button>
+    </div>
+    <div style="margin-top:10px" id="btn-eliminar-art-wrap">
+      <button class="btn btn-danger btn-full" onclick="eliminarArticulo()">Eliminar artículo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nuevo Conteo -->
+<div class="modal-overlay" id="modal-conteo">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nuevo conteo</div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Tipo de conteo</label>
+      <select id="conteo-tipo" onchange="renderSelectorArticulosConteo()">
+        <option value="total">Total (todo el depósito)</option>
+        <option value="parcial">Parcial (artículos específicos)</option>
+        <option value="individual">Individual (un artículo)</option>
+      </select>
+    </div>
+    <div class="field" style="margin-bottom:12px" id="conteo-articulo-selector">
+      <label>Artículo</label>
+      <div style="display:flex;gap:8px">
+        <select id="conteo-articulo-sel" style="flex:1"></select>
+        <button class="btn btn-ghost btn-sm" onclick="openScanner('conteo-sel')">📷</button>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:16px">
+      <label>Notas del conteo (opcional)</label>
+      <textarea id="conteo-nota" placeholder="Observaciones…"></textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-conteo')">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="crearConteo()">Iniciar conteo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Conteo Activo -->
+<div class="modal-overlay" id="modal-conteo-activo">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="modal-title" style="margin:0" id="conteo-activo-title">Conteo en curso</div>
+      <button class="btn btn-ghost btn-sm" onclick="openScanner('conteo-activo')">📷 Scan</button>
+    </div>
+    <div id="conteo-activo-items"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-danger btn-sm" onclick="cancelarConteoActivo()">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="finalizarConteo()">Finalizar y guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nota -->
+<div class="modal-overlay" id="modal-nota">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nueva nota</div>
+    <div class="field" style="margin-bottom:16px">
+      <label>Nota</label>
+      <textarea id="nota-texto" placeholder="Escribí tu nota…" style="min-height:120px"></textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-nota')">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="guardarNota()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Usuario -->
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-usuario-title">Nuevo usuario</div>
+    <div class="form-grid">
+      <div class="field field-full"><label>Nombre</label><input type="text" id="usr-nombre" placeholder="Nombre completo"></div>
+      <div class="field field-full"><label>Usuario</label><input type="text" id="usr-user" placeholder="usuario"></div>
+      <div class="field field-full"><label>Contraseña</label><input type="password" id="usr-pass" placeholder="••••••••"></div>
+      <div class="field field-full"><label>Rol</label>
+        <select id="usr-rol">
+          <option value="operario">Operario</option>
+          <option value="administrativo">Administrativo</option>
+          <option value="jefe">Jefe</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-usuario')">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="guardarUsuario()">Guardar</button>
+    </div>
+    <div style="margin-top:10px" id="btn-eliminar-usr-wrap">
+      <button class="btn btn-danger btn-full" onclick="eliminarUsuario()">Eliminar usuario</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Categoría -->
+<div class="modal-overlay" id="modal-categoria">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nueva categoría</div>
+    <div class="field" style="margin-bottom:16px"><label>Nombre</label><input type="text" id="cat-nombre" placeholder="Ej: Electrónica"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-categoria')">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="guardarCategoria()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// DATA STORE (localStorage)
+// ============================================================
+const DB = {
+  get: (k) => { try { return JSON.parse(localStorage.getItem('sapp_'+k)) || null; } catch(e){ return null; } },
+  set: (k,v) => localStorage.setItem('sapp_'+k, JSON.stringify(v)),
+};
+
+function initDB() {
+  if (!DB.get('usuarios')) {
+    DB.set('usuarios', [
+      { id:'u1', nombre:'Administrador', username:'admin', password:'admin123', rol:'admin' },
+      { id:'u2', nombre:'Jefe', username:'jefe', password:'jefe123', rol:'jefe' },
+      { id:'u3', nombre:'Administrativo 1', username:'admin1', password:'adm123', rol:'administrativo' },
+      { id:'u4', nombre:'Administrativo 2', username:'admin2', password:'adm123', rol:'administrativo' },
+      { id:'u5', nombre:'Operario', username:'operario', password:'op123', rol:'operario' },
+    ]);
+  }
+  if (!DB.get('categorias')) DB.set('categorias', ['General','Electrónica','Herramientas','Insumos','Indumentaria']);
+  if (!DB.get('articulos')) DB.set('articulos', [
+    { id:'a1', sku:'SKU001', nombre:'Notebook HP 15"', barcode:'7890001', categoria:'Electrónica', ubicacion:'A1', stock:12, minimo:3 },
+    { id:'a2', sku:'SKU002', nombre:'Mouse Logitech M185', barcode:'7890002', categoria:'Electrónica', ubicacion:'A2', stock:2, minimo:5 },
+    { id:'a3', sku:'SKU003', nombre:'Teclado mecánico', barcode:'7890003', categoria:'Electrónica', ubicacion:'A2', stock:0, minimo:2 },
+    { id:'a4', sku:'SKU004', nombre:'Destornillador PH2', barcode:'7890004', categoria:'Herramientas', ubicacion:'B1', stock:18, minimo:4 },
+    { id:'a5', sku:'SKU005', nombre:'Papel A4 resma', barcode:'7890005', categoria:'Insumos', ubicacion:'C3', stock:8, minimo:10 },
+  ]);
+  if (!DB.get('conteos')) DB.set('conteos', []);
+  if (!DB.get('notas')) DB.set('notas', []);
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+let currentUser = null;
+
+const PERMISOS = {
+  admin:         { todo:true },
+  jefe:          { verAlertas:true, verAnalisis:true, verNotas:true, editarInfo:true, configurarUmbral:true, editarStock:false, exportar:false, realizarConteo:false, verDiferencias:true },
+  administrativo:{ verAlertas:true, exportar:true, editarStock:true, editarInfo:true, configurarUmbral:true, verDiferencias:true, realizarConteo:true },
+  operario:      { verDiferencias:true, realizarConteo:true, exportar:true },
+};
+
+function can(perm) {
+  if (!currentUser) return false;
+  const p = PERMISOS[currentUser.rol];
+  if (p && p.todo) return true;
+  return p && p[perm] === true;
+}
+
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  const usuarios = DB.get('usuarios') || [];
+  const found = usuarios.find(x => x.username === u && x.password === p);
+  if (found) {
+    currentUser = found;
+    document.getElementById('login-error').style.display = 'none';
+    showApp();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+// Enter en login
+document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('login-user').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+// ============================================================
+// APP INIT
+// ============================================================
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('topbar-username').textContent = currentUser.nombre;
+  document.getElementById('topbar-role').textContent = currentUser.rol;
+  setupNavPermisos();
+  navTo('dashboard', document.getElementById('nav-dashboard'));
+}
+
+function setupNavPermisos() {
+  // Admin nav solo para admin
+  const adminNav = document.getElementById('nav-admin');
+  adminNav.style.display = currentUser.rol === 'admin' ? '' : 'none';
+  // Conteos
+  document.getElementById('btn-nuevo-conteo').style.display = can('realizarConteo') ? '' : 'none';
+  document.getElementById('btn-nuevo-articulo').style.display = (can('todo') || can('editarInfo')) ? '' : 'none';
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+let currentPage = 'dashboard';
+let activeFilter = 'all';
+
+function navTo(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if (el) el.classList.add('active');
+  currentPage = page;
+  renderPage(page);
+}
+
+function renderPage(page) {
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'articulos') renderArticulos();
+  if (page === 'conteos') renderConteos();
+  if (page === 'notas') renderNotas();
+  if (page === 'admin') renderAdmin();
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const articulos = DB.get('articulos') || [];
+  const conteos = DB.get('conteos') || [];
+  const now = new Date();
+  document.getElementById('dash-fecha').textContent = now.toLocaleDateString('es-AR', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+  const total = articulos.length;
+  const sinStock = articulos.filter(a => a.stock === 0).length;
+  const pocoStock = articulos.filter(a => a.stock > 0 && a.stock <= a.minimo).length;
+  const ok = total - sinStock - pocoStock;
+
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat-card accent"><div class="stat-val">${total}</div><div class="stat-label">Artículos</div></div>
+    <div class="stat-card good"><div class="stat-val">${ok}</div><div class="stat-label">OK</div></div>
+    <div class="stat-card warn"><div class="stat-val">${pocoStock}</div><div class="stat-label">Poco stock</div></div>
+    <div class="stat-card danger"><div class="stat-val">${sinStock}</div><div class="stat-label">Sin stock</div></div>
+  `;
+
+  // Alertas
+  const alertas = articulos.filter(a => a.stock <= a.minimo);
+  document.getElementById('dash-alertas-count').textContent = alertas.length;
+  if (alertas.length === 0) {
+    document.getElementById('dash-alertas-list').innerHTML = '<div class="empty"><div class="empty-text">Sin alertas activas ✓</div></div>';
+  } else {
+    document.getElementById('dash-alertas-list').innerHTML = alertas.slice(0,5).map(a => `
+      <div class="alert-item">
+        <div class="alert-icon ${a.stock===0?'danger':'warn'}">${a.stock===0?'🔴':'🟡'}</div>
+        <div class="alert-text">
+          <div class="alert-name">${a.nombre}</div>
+          <div class="alert-detail">Stock: ${a.stock} / Mínimo: ${a.minimo} · ${a.ubicacion}</div>
+        </div>
+        ${a.stock===0?'<span class="badge badge-red">Sin stock</span>':'<span class="badge badge-amber">Poco</span>'}
+      </div>
+    `).join('');
+  }
+
+  // Últimos conteos
+  const ultConteos = [...conteos].filter(c=>c.estado==='finalizado').sort((a,b)=>b.fecha-a.fecha).slice(0,4);
+  if (ultConteos.length === 0) {
+    document.getElementById('dash-conteos-list').innerHTML = '<div class="empty"><div class="empty-text">Sin conteos registrados</div></div>';
+  } else {
+    document.getElementById('dash-conteos-list').innerHTML = ultConteos.map(c => {
+      const d = new Date(c.fecha);
+      const diff = c.items ? c.items.reduce((s,i)=>s+Math.abs(i.diferencia||0),0) : 0;
+      return `<div class="historial-item">
+        <div><div class="h-name">${c.nombre||'Conteo'}</div><div class="h-date">${d.toLocaleDateString('es-AR')} · ${c.usuario}</div></div>
+        <span class="badge ${diff===0?'badge-green':'badge-amber'}">${diff===0?'Sin diferencias':diff+' dif.'}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Mayor movimiento (basado en cantidad de conteos por artículo)
+  const movMap = {};
+  conteos.filter(c=>c.estado==='finalizado').forEach(c => {
+    (c.items||[]).forEach(i => { movMap[i.articuloId] = (movMap[i.articuloId]||0)+1; });
+  });
+  const movOrden = Object.entries(movMap).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  if (movOrden.length === 0) {
+    document.getElementById('dash-mov-list').innerHTML = '<div class="empty"><div class="empty-text">Sin datos de movimiento aún</div></div>';
+  } else {
+    document.getElementById('dash-mov-list').innerHTML = movOrden.map(([id, cnt]) => {
+      const art = articulos.find(a=>a.id===id);
+      if (!art) return '';
+      return `<div class="historial-item">
+        <div><div class="h-name">${art.nombre}</div><div class="h-date">${art.sku} · ${art.categoria}</div></div>
+        <span class="badge badge-blue">${cnt} conteo${cnt>1?'s':''}</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ============================================================
+// ARTÍCULOS
+// ============================================================
+let editArticuloId = null;
+
+function setFilter(f) {
+  activeFilter = f;
+  ['all','low','zero'].forEach(id => {
+    document.getElementById('filter-'+id).style.opacity = id===f ? '1' : '0.5';
+  });
+  renderArticulos();
+}
+
+function renderArticulos() {
+  const articulos = DB.get('articulos') || [];
+  const q = (document.getElementById('search-articulos').value||'').toLowerCase();
+  let lista = articulos;
+  if (q) lista = lista.filter(a => a.nombre.toLowerCase().includes(q)||a.sku.toLowerCase().includes(q)||a.categoria.toLowerCase().includes(q)||a.barcode.includes(q));
+  if (activeFilter === 'low') lista = lista.filter(a => a.stock > 0 && a.stock <= a.minimo);
+  if (activeFilter === 'zero') lista = lista.filter(a => a.stock === 0);
+
+  const canEdit = can('editarInfo') || can('editarStock');
+
+  if (lista.length === 0) {
+    document.getElementById('lista-articulos').innerHTML = '<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">No se encontraron artículos</div></div>';
+    return;
+  }
+  document.getElementById('lista-articulos').innerHTML = lista.map(a => {
+    let badge = '';
+    if (a.stock === 0) badge = '<span class="badge badge-red">Sin stock</span>';
+    else if (a.stock <= a.minimo) badge = '<span class="badge badge-amber">Poco stock</span>';
+    else badge = '<span class="badge badge-green">OK</span>';
+    const stockColor = a.stock === 0 ? 'color:var(--red)' : a.stock <= a.minimo ? 'color:var(--amber)' : 'color:var(--green)';
+    return `<div class="article-item" onclick="${canEdit?`openModalArticulo('${a.id}')`:''}" style="${canEdit?'cursor:pointer':'cursor:default'}">
+      <div class="article-thumb">${a.sku.slice(-4)}</div>
+      <div class="article-info">
+        <div class="article-name">${a.nombre}</div>
+        <div class="article-meta">${a.categoria} · ${a.ubicacion}</div>
+        <div style="margin-top:4px">${badge}</div>
+      </div>
+      <div class="article-stock">
+        <div class="article-stock-num" style="${stockColor}">${a.stock}</div>
+        <div class="article-stock-label">unidades</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openModalArticulo(id) {
+  editArticuloId = id || null;
+  const cats = DB.get('categorias') || [];
+  document.getElementById('art-categoria').innerHTML = '<option value="">Seleccionar…</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  
+  if (id) {
+    const art = (DB.get('articulos')||[]).find(a=>a.id===id);
+    if (!art) return;
+    document.getElementById('modal-articulo-title').textContent = 'Editar artículo';
+    document.getElementById('art-sku').value = art.sku;
+    document.getElementById('art-barcode').value = art.barcode;
+    document.getElementById('art-nombre').value = art.nombre;
+    document.getElementById('art-categoria').value = art.categoria;
+    document.getElementById('art-ubicacion').value = art.ubicacion;
+    document.getElementById('art-stock').value = art.stock;
+    document.getElementById('art-minimo').value = art.minimo;
+    document.getElementById('btn-eliminar-art-wrap').style.display = '';
+    // Stock editable solo para admin/administrativo
+    document.getElementById('art-stock').disabled = !can('editarStock');
+    document.getElementById('art-minimo').disabled = !can('configurarUmbral');
+  } else {
+    document.getElementById('modal-articulo-title').textContent = 'Nuevo artículo';
+    ['art-sku','art-barcode','art-nombre','art-ubicacion'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('art-stock').value = 0;
+    document.getElementById('art-minimo').value = 5;
+    document.getElementById('btn-eliminar-art-wrap').style.display = 'none';
+    document.getElementById('art-stock').disabled = false;
+    document.getElementById('art-minimo').disabled = false;
+  }
+  openModal('modal-articulo');
+}
+
+function guardarArticulo() {
+  const sku = document.getElementById('art-sku').value.trim();
+  const nombre = document.getElementById('art-nombre').value.trim();
+  if (!sku || !nombre) { showToast('SKU y nombre son obligatorios','error'); return; }
+  
+  let articulos = DB.get('articulos') || [];
+  const datos = {
+    sku, nombre,
+    barcode: document.getElementById('art-barcode').value.trim() || sku,
+    categoria: document.getElementById('art-categoria').value || 'General',
+    ubicacion: document.getElementById('art-ubicacion').value.trim(),
+    stock: parseInt(document.getElementById('art-stock').value)||0,
+    minimo: parseInt(document.getElementById('art-minimo').value)||0,
+  };
+
+  if (editArticuloId) {
+    articulos = articulos.map(a => a.id===editArticuloId ? {...a,...datos} : a);
+    showToast('Artículo actualizado','success');
+  } else {
+    datos.id = 'a'+Date.now();
+    articulos.push(datos);
+    showToast('Artículo creado','success');
+  }
+  DB.set('articulos', articulos);
+  closeModal('modal-articulo');
+  renderArticulos();
+  renderDashboard();
+}
+
+function eliminarArticulo() {
+  if (!editArticuloId) return;
+  if (!confirm('¿Eliminar este artículo?')) return;
+  let articulos = (DB.get('articulos')||[]).filter(a=>a.id!==editArticuloId);
+  DB.set('articulos', articulos);
+  closeModal('modal-articulo');
+  showToast('Artículo eliminado');
+  renderArticulos();
+  renderDashboard();
+}
+
+// ============================================================
+// CONTEOS
+// ============================================================
+let conteoActivo = null;
+let conteoTab = 'activos';
+
+function switchConteoTab(tab, el) {
+  conteoTab = tab;
+  document.querySelectorAll('#page-conteos .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('conteos-activos').style.display = tab==='activos'?'':'none';
+  document.getElementById('conteos-historial').style.display = tab==='historial'?'':'none';
+  document.getElementById('conteos-diferencias').style.display = tab==='diferencias'?'':'none';
+  renderConteos();
+}
+
+function renderConteos() {
+  const conteos = DB.get('conteos') || [];
+  if (conteoTab === 'activos') {
+    const activos = conteos.filter(c=>c.estado==='activo');
+    if (activos.length === 0) {
+      document.getElementById('conteos-activos').innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No hay conteos en curso</div></div>';
+    } else {
+      document.getElementById('conteos-activos').innerHTML = activos.map(c => `
+        <div class="card" style="cursor:pointer" onclick="abrirConteoActivo('${c.id}')">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-weight:500">${c.nombre||'Conteo'}</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:2px">${new Date(c.fecha).toLocaleDateString('es-AR')} · ${c.usuario}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:12px;color:var(--text3)">${c.items.length} artículo${c.items.length!==1?'s':''}</div>
+              <span class="badge badge-blue" style="margin-top:4px">En curso →</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+  if (conteoTab === 'historial') {
+    const hist = conteos.filter(c=>c.estado==='finalizado').sort((a,b)=>b.fecha-a.fecha);
+    if (hist.length === 0) {
+      document.getElementById('conteos-historial').innerHTML = '<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">Sin historial de conteos</div></div>';
+    } else {
+      document.getElementById('conteos-historial').innerHTML = hist.map(c => {
+        const totalDiff = c.items.reduce((s,i)=>s+Math.abs(i.diferencia||0),0);
+        return `<div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+            <div>
+              <div style="font-weight:500">${c.nombre||'Conteo'}</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:2px">${new Date(c.fecha).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})} · ${c.usuario}</div>
+              ${c.nota?`<div style="font-size:12px;color:var(--text3);margin-top:4px;font-style:italic">"${c.nota}"</div>`:''}
+            </div>
+            <span class="badge ${totalDiff===0?'badge-green':'badge-amber'}">${totalDiff===0?'Sin dif.':totalDiff+' dif.'}</span>
+          </div>
+          ${c.items.map(i=>{
+            const art = (DB.get('articulos')||[]).find(a=>a.id===i.articuloId);
+            const d = i.diferencia||0;
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:0.5px solid var(--border);font-size:13px">
+              <span style="color:var(--text2)">${art?art.nombre:i.articuloId}</span>
+              <span>Contado: ${i.contado} | Sistema: ${i.sistema} | <span class="${d===0?'diff-zero':d>0?'diff-pos':'diff-neg'}">${d>0?'+':''}${d}</span></span>
+            </div>`;
+          }).join('')}
+        </div>`;
+      }).join('');
+    }
+  }
+  if (conteoTab === 'diferencias') {
+    renderDiferencias();
+  }
+}
+
+function renderDiferencias() {
+  const conteos = DB.get('conteos').filter(c=>c.estado==='finalizado');
+  const articulos = DB.get('articulos') || [];
+  // Acumular diferencias por artículo
+  const diffMap = {};
+  conteos.forEach(c => {
+    c.items.forEach(i => {
+      if (!diffMap[i.articuloId]) diffMap[i.articuloId] = { total:0, count:0 };
+      diffMap[i.articuloId].total += (i.diferencia||0);
+      diffMap[i.articuloId].count++;
+    });
+  });
+  const entries = Object.entries(diffMap).sort((a,b)=>Math.abs(b[1].total)-Math.abs(a[1].total));
+  if (entries.length === 0) {
+    document.getElementById('conteos-diferencias').innerHTML = '<div class="empty"><div class="empty-icon">📉</div><div class="empty-text">Sin datos de diferencias aún</div></div>';
+    return;
+  }
+  document.getElementById('conteos-diferencias').innerHTML = entries.map(([id,data])=>{
+    const art = articulos.find(a=>a.id===id);
+    const d = data.total;
+    return `<div class="card" style="padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:500;font-size:14px">${art?art.nombre:id}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">${data.count} conteo${data.count!==1?'s':''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'DM Mono',monospace;font-size:18px;${d===0?'color:var(--text3)':d>0?'color:var(--red)':'color:var(--green)'}">${d>0?'+':''}${d}</div>
+          <div style="font-size:11px;color:var(--text3)">${d>0?'sobrante':d<0?'faltante':'exacto'}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openModalNuevoConteo() {
+  renderSelectorArticulosConteo();
+  openModal('modal-conteo');
+}
+
+function renderSelectorArticulosConteo() {
+  const tipo = document.getElementById('conteo-tipo').value;
+  const wrap = document.getElementById('conteo-articulo-selector');
+  if (tipo === 'total') { wrap.style.display='none'; return; }
+  wrap.style.display = '';
+  const articulos = DB.get('articulos') || [];
+  document.getElementById('conteo-articulo-sel').innerHTML = articulos.map(a=>`<option value="${a.id}">${a.sku} - ${a.nombre}</option>`).join('');
+}
+
+function crearConteo() {
+  const tipo = document.getElementById('conteo-tipo').value;
+  const nota = document.getElementById('conteo-nota').value.trim();
+  const articulos = DB.get('articulos') || [];
+  let items = [];
+  let nombre = '';
+
+  if (tipo === 'total') {
+    items = articulos.map(a=>({ articuloId:a.id, contado:'', sistema:'', diferencia:0 }));
+    nombre = 'Conteo total';
+  } else if (tipo === 'individual') {
+    const artId = document.getElementById('conteo-articulo-sel').value;
+    const art = articulos.find(a=>a.id===artId);
+    items = [{ articuloId:artId, contado:'', sistema:'', diferencia:0 }];
+    nombre = `Conteo: ${art?art.nombre:'Artículo'}`;
+  } else {
+    const artId = document.getElementById('conteo-articulo-sel').value;
+    const art = articulos.find(a=>a.id===artId);
+    items = [{ articuloId:artId, contado:'', sistema:'', diferencia:0 }];
+    nombre = `Conteo parcial`;
+  }
+
+  const nuevo = { id:'c'+Date.now(), nombre, tipo, nota, fecha:Date.now(), usuario:currentUser.nombre, estado:'activo', items };
+  const conteos = DB.get('conteos') || [];
+  conteos.push(nuevo);
+  DB.set('conteos', conteos);
+  conteoActivo = nuevo;
+  closeModal('modal-conteo');
+  renderConteos();
+  abrirConteoActivo(nuevo.id);
+  showToast('Conteo iniciado');
+}
+
+function abrirConteoActivo(id) {
+  const conteos = DB.get('conteos') || [];
+  conteoActivo = conteos.find(c=>c.id===id);
+  if (!conteoActivo) return;
+  const articulos = DB.get('articulos') || [];
+  document.getElementById('conteo-activo-title').textContent = conteoActivo.nombre;
+  document.getElementById('conteo-activo-items').innerHTML = conteoActivo.items.map((item,idx) => {
+    const art = articulos.find(a=>a.id===item.articuloId);
+    return `<div class="conteo-item">
+      <div class="conteo-nombre">${art?art.nombre:'Artículo desconocido'} <span style="font-size:11px;color:var(--text3)">${art?art.sku:''}</span></div>
+      <div class="conteo-inputs">
+        <div class="conteo-input-wrap">
+          <label>Contado físicamente</label>
+          <input type="number" id="cnt-contado-${idx}" value="${item.contado}" min="0" oninput="calcDiff(${idx})" placeholder="0">
+        </div>
+        <div class="conteo-input-wrap">
+          <label>En sistema de ventas</label>
+          <input type="number" id="cnt-sistema-${idx}" value="${item.sistema}" min="0" oninput="calcDiff(${idx})" placeholder="0">
+        </div>
+      </div>
+      <div class="diff-tag" id="diff-tag-${idx}"></div>
+    </div>`;
+  }).join('');
+  conteoActivo.items.forEach((_,idx) => calcDiff(idx));
+  openModal('modal-conteo-activo');
+}
+
+function calcDiff(idx) {
+  const contado = parseInt(document.getElementById('cnt-contado-'+idx).value)||0;
+  const sistema = parseInt(document.getElementById('cnt-sistema-'+idx).value)||0;
+  const diff = contado - sistema;
+  const tag = document.getElementById('diff-tag-'+idx);
+  if (document.getElementById('cnt-contado-'+idx).value === '' || document.getElementById('cnt-sistema-'+idx).value === '') {
+    tag.innerHTML = '';
+    return;
+  }
+  tag.innerHTML = `Diferencia: <span class="${diff===0?'diff-zero':diff>0?'diff-pos':'diff-neg'}">${diff>0?'+':''}${diff}</span>`;
+}
+
+function finalizarConteo() {
+  if (!conteoActivo) return;
+  const articulos = DB.get('articulos') || [];
+  conteoActivo.items = conteoActivo.items.map((item,idx) => {
+    const contado = parseInt(document.getElementById('cnt-contado-'+idx).value)||0;
+    const sistema = parseInt(document.getElementById('cnt-sistema-'+idx).value)||0;
+    return { ...item, contado, sistema, diferencia: contado - sistema };
+  });
+  conteoActivo.estado = 'finalizado';
+  conteoActivo.fechaFin = Date.now();
+  let conteos = DB.get('conteos') || [];
+  conteos = conteos.map(c => c.id === conteoActivo.id ? conteoActivo : c);
+  DB.set('conteos', conteos);
+  closeModal('modal-conteo-activo');
+  showToast('Conteo finalizado','success');
+  renderConteos();
+  renderDashboard();
+  conteoActivo = null;
+}
+
+function cancelarConteoActivo() {
+  if (!conteoActivo) return;
+  if (!confirm('¿Cancelar este conteo? Se perderán los datos.')) return;
+  let conteos = (DB.get('conteos')||[]).filter(c=>c.id!==conteoActivo.id);
+  DB.set('conteos', conteos);
+  closeModal('modal-conteo-activo');
+  conteoActivo = null;
+  renderConteos();
+  showToast('Conteo cancelado');
+}
+
+// ============================================================
+// NOTAS
+// ============================================================
+function renderNotas() {
+  const notas = DB.get('notas') || [];
+  if (notas.length === 0) {
+    document.getElementById('lista-notas').innerHTML = '<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">Sin notas aún</div></div>';
+    return;
+  }
+  document.getElementById('lista-notas').innerHTML = [...notas].reverse().map(n => `
+    <div class="nota-item">
+      <div class="nota-header">
+        <span class="nota-author">${n.autor}</span>
+        <span class="nota-date">${new Date(n.fecha).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span>
+      </div>
+      <div class="nota-text">${n.texto}</div>
+      ${n.autorId===currentUser.id||currentUser.rol==='admin'?`<button class="btn btn-ghost btn-sm" style="margin-top:8px;color:var(--red)" onclick="eliminarNota('${n.id}')">Eliminar</button>`:''}
+    </div>
+  `).join('');
+}
+
+function openModalNota() { openModal('modal-nota'); document.getElementById('nota-texto').value=''; }
+
+function guardarNota() {
+  const texto = document.getElementById('nota-texto').value.trim();
+  if (!texto) { showToast('Escribí algo primero','error'); return; }
+  const notas = DB.get('notas') || [];
+  notas.push({ id:'n'+Date.now(), texto, autor:currentUser.nombre, autorId:currentUser.id, fecha:Date.now() });
+  DB.set('notas', notas);
+  closeModal('modal-nota');
+  renderNotas();
+  showToast('Nota guardada','success');
+}
+
+function eliminarNota(id) {
+  if (!confirm('¿Eliminar esta nota?')) return;
+  DB.set('notas', (DB.get('notas')||[]).filter(n=>n.id!==id));
+  renderNotas();
+  showToast('Nota eliminada');
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+let editUserId = null;
+
+function renderAdmin() {
+  renderUsuarios();
+  renderCategorias();
+}
+
+function renderUsuarios() {
+  const usuarios = DB.get('usuarios') || [];
+  const colores = { admin:'#3b82f6', jefe:'#8b5cf6', administrativo:'#22c55e', operario:'#f59e0b' };
+  document.getElementById('lista-usuarios').innerHTML = usuarios.map(u => `
+    <div class="user-item">
+      <div class="user-avatar" style="background:${colores[u.rol]||'var(--bg3)'}20;color:${colores[u.rol]||'var(--text2)'}">
+        ${u.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
+      </div>
+      <div class="user-info">
+        <div class="user-name">${u.nombre}</div>
+        <div class="user-role">@${u.username} · ${u.rol}</div>
+      </div>
+      ${u.id!==currentUser.id?`<button class="btn btn-ghost btn-sm" onclick="openModalUsuario('${u.id}')">Editar</button>`:'<span class="badge badge-blue">Tú</span>'}
+    </div>
+  `).join('');
+}
+
+function renderCategorias() {
+  const cats = DB.get('categorias') || [];
+  document.getElementById('lista-categorias').innerHTML = cats.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border)">
+      <span>${c}</span>
+      <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="eliminarCategoria('${c}')">×</button>
+      </div>
+  `).join('');
+}
+
+function openModalUsuario(id) {
+  editUserId = id || null;
+  document.getElementById('btn-eliminar-usr-wrap').style.display = id ? '' : 'none';
+  if (id) {
+    const u = (DB.get('usuarios')||[]).find(x=>x.id===id);
+    if (!u) return;
+    document.getElementById('modal-usuario-title').textContent = 'Editar usuario';
+    document.getElementById('usr-nombre').value = u.nombre;
+    document.getElementById('usr-user').value = u.username;
+    document.getElementById('usr-pass').value = '';
+    document.getElementById('usr-rol').value = u.rol;
+  } else {
+    document.getElementById('modal-usuario-title').textContent = 'Nuevo usuario';
+    ['usr-nombre','usr-user','usr-pass'].forEach(x=>document.getElementById(x).value='');
+    document.getElementById('usr-rol').value = 'operario';
+  }
+  openModal('modal-usuario');
+}
+
+function guardarUsuario() {
+  const nombre = document.getElementById('usr-nombre').value.trim();
+  const username = document.getElementById('usr-user').value.trim();
+  const pass = document.getElementById('usr-pass').value;
+  const rol = document.getElementById('usr-rol').value;
+  if (!nombre || !username) { showToast('Completá nombre y usuario','error'); return; }
+  let usuarios = DB.get('usuarios') || [];
+  if (editUserId) {
+    usuarios = usuarios.map(u => u.id===editUserId ? {...u, nombre, username, rol, ...(pass?{password:pass}:{})} : u);
+    showToast('Usuario actualizado','success');
+  } else {
+    if (!pass) { showToast('La contraseña es obligatoria','error'); return; }
+    usuarios.push({ id:'u'+Date.now(), nombre, username, password:pass, rol });
+    showToast('Usuario creado','success');
+  }
+  DB.set('usuarios', usuarios);
+  closeModal('modal-usuario');
+  renderUsuarios();
+}
+
+function eliminarUsuario() {
+  if (!editUserId) return;
+  if (editUserId===currentUser.id) { showToast('No podés eliminarte a vos mismo','error'); return; }
+  if (!confirm('¿Eliminar este usuario?')) return;
+  DB.set('usuarios', (DB.get('usuarios')||[]).filter(u=>u.id!==editUserId));
+  closeModal('modal-usuario');
+  renderUsuarios();
+  showToast('Usuario eliminado');
+}
+
+function openModalCategoria() { document.getElementById('cat-nombre').value=''; openModal('modal-categoria'); }
+
+function guardarCategoria() {
+  const nombre = document.getElementById('cat-nombre').value.trim();
+  if (!nombre) { showToast('Escribí un nombre','error'); return; }
+  const cats = DB.get('categorias') || [];
+  if (cats.includes(nombre)) { showToast('Ya existe','error'); return; }
+  cats.push(nombre);
+  DB.set('categorias', cats);
+  closeModal('modal-categoria');
+  renderCategorias();
+  showToast('Categoría creada','success');
+}
+
+function eliminarCategoria(nombre) {
+  if (!confirm(`¿Eliminar categoría "${nombre}"?`)) return;
+  DB.set('categorias', (DB.get('categorias')||[]).filter(c=>c!==nombre));
+  renderCategorias();
+  showToast('Categoría eliminada');
+}
+
+// ============================================================
+// EXPORTAR EXCEL
+// ============================================================
+function exportarArticulos() {
+  const articulos = DB.get('articulos') || [];
+  const ws = XLSX.utils.json_to_sheet(articulos.map(a=>({
+    SKU: a.sku, Nombre: a.nombre, 'Código de barras': a.barcode,
+    Categoría: a.categoria, Ubicación: a.ubicacion,
+    Stock: a.stock, 'Stock mínimo': a.minimo,
+    Estado: a.stock===0?'Sin stock':a.stock<=a.minimo?'Poco stock':'OK'
+  })));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Artículos');
+  XLSX.writeFile(wb, 'articulos_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Excel exportado','success');
+}
+
+function exportarConteos() {
+  const conteos = (DB.get('conteos')||[]).filter(c=>c.estado==='finalizado');
+  const articulos = DB.get('articulos') || [];
+  const rows = [];
+  conteos.forEach(c => {
+    c.items.forEach(i => {
+      const art = articulos.find(a=>a.id===i.articuloId);
+      rows.push({
+        Conteo: c.nombre, Fecha: new Date(c.fecha).toLocaleDateString('es-AR'),
+        Usuario: c.usuario, Artículo: art?art.nombre:i.articuloId,
+        SKU: art?art.sku:'', Contado: i.contado, Sistema: i.sistema, Diferencia: i.diferencia
+      });
+    });
+  });
+  if (rows.length===0) { showToast('No hay conteos para exportar','error'); return; }
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Conteos');
+  XLSX.writeFile(wb, 'conteos_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Excel exportado','success');
+}
+
+function exportarDiferencias() {
+  const conteos = (DB.get('conteos')||[]).filter(c=>c.estado==='finalizado');
+  const articulos = DB.get('articulos') || [];
+  const diffMap = {};
+  conteos.forEach(c => {
+    c.items.forEach(i => {
+      if (!diffMap[i.articuloId]) diffMap[i.articuloId] = { conteos:0, diferencia_total:0 };
+      diffMap[i.articuloId].conteos++;
+      diffMap[i.articuloId].diferencia_total += (i.diferencia||0);
+    });
+  });
+  const rows = Object.entries(diffMap).map(([id,d])=>{
+    const art = articulos.find(a=>a.id===id);
+    return { Artículo: art?art.nombre:id, SKU: art?art.sku:'', 'Cantidad de conteos': d.conteos, 'Diferencia total': d.diferencia_total, Estado: d.diferencia_total===0?'Exacto':d.diferencia_total>0?'Sobrante':'Faltante' };
+  });
+  if (rows.length===0) { showToast('No hay diferencias para exportar','error'); return; }
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Diferencias');
+  XLSX.writeFile(wb, 'diferencias_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Excel exportado','success');
+}
+
+// ============================================================
+// SCANNER (html5-qrcode)
+// ============================================================
+let scannerInstance = null;
+let scannerTarget = null;
+
+function openScanner(target) {
+  scannerTarget = target;
+  document.getElementById('scanner-overlay').style.display = 'flex';
+  setTimeout(() => {
+    scannerInstance = new Html5Qrcode('qr-reader');
+    scannerInstance.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 280, height: 200 } },
+      onScanSuccess,
+      () => {}
+    ).catch(err => {
+      showToast('No se pudo acceder a la cámara','error');
+      closeScanner();
+    });
+  }, 200);
+}
+
+function onScanSuccess(code) {
+  closeScanner();
+  if (scannerTarget === 'search') {
+    document.getElementById('search-articulos').value = code;
+    renderArticulos();
+    showToast('Código escaneado: '+code);
+  } else if (scannerTarget === 'barcode') {
+    document.getElementById('art-barcode').value = code;
+    showToast('Código escaneado');
+  } else if (scannerTarget === 'conteo-sel') {
+    const articulos = DB.get('articulos') || [];
+    const art = articulos.find(a=>a.barcode===code||a.sku===code);
+    if (art) { document.getElementById('conteo-articulo-sel').value = art.id; showToast('Artículo encontrado'); }
+    else showToast('Artículo no encontrado','error');
+  } else if (scannerTarget === 'conteo-activo') {
+    const articulos = DB.get('articulos') || [];
+    const art = articulos.find(a=>a.barcode===code||a.sku===code);
+    if (art && conteoActivo) {
+      const idx = conteoActivo.items.findIndex(i=>i.articuloId===art.id);
+      if (idx >= 0) {
+        document.getElementById('cnt-contado-'+idx).focus();
+        showToast('Artículo: '+art.nombre);
+      } else showToast('Artículo no está en este conteo','error');
+    } else showToast('Artículo no encontrado','error');
+  }
+}
+
+function closeScanner() {
+  if (scannerInstance) {
+    scannerInstance.stop().catch(()=>{});
+    scannerInstance.clear();
+    scannerInstance = null;
+  }
+  document.getElementById('scanner-overlay').style.display = 'none';
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.classList.remove('open'); });
+});
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type?' '+type:'');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ============================================================
+// SPLASH → LOGIN
+// ============================================================
+initDB();
+setTimeout(() => {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}, 1500);
+
+// Service Worker para PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
